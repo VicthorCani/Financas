@@ -1,5 +1,9 @@
 // src/screens/CategoriesScreen.js
+
+// Importações principais do React
 import React, { useState, useEffect } from 'react';
+
+// Importações de componentes do React Native
 import {
   View,
   Text,
@@ -10,40 +14,62 @@ import {
   ScrollView,
   FlatList,
 } from 'react-native';
+
+// Importa o contexto de autenticação (para pegar dados do usuário logado)
 import { useAuth } from '../contexts/AuthContext';
+
+// Importa conexão com Supabase
 import { supabase } from '../config/supabase';
 
 export default function CategoriesScreen({ navigation }) {
+
+  // Lista de categorias puxadas do banco
   const [categories, setCategories] = useState([]);
+
+  // Nome da nova categoria digitada
   const [newCategoryName, setNewCategoryName] = useState('');
+
+  // Tipo da categoria (padrão: despesa)
   const [newCategoryType, setNewCategoryType] = useState('expense');
+
+  // Estado de carregamento (evita clicar duas vezes)
   const [loading, setLoading] = useState(false);
+
+  // Dados do usuário logado
   const { user } = useAuth();
 
+  // Carrega categorias quando a tela abre
   useEffect(() => {
     loadCategories();
   }, []);
 
+  // Função que busca categorias no Supabase
   const loadCategories = async () => {
+
     const { data, error } = await supabase
-      .from('categories')
-      .select('*')
-      .eq('user_id', user.id)
-      .order('created_at', { ascending: false });
+      .from('categories')        // tabela
+      .select('*')               // busca tudo
+      .eq('user_id', user.id)    // somente do usuário logado
+      .order('created_at', { ascending: false }); // mais recente primeiro
 
     if (!error) {
-      setCategories(data);
+      setCategories(data); // salva no estado
     }
   };
 
+  // Função para adicionar nova categoria
   const handleAddCategory = async () => {
+
+    // Se o usuário não digitou nome → alerta
     if (!newCategoryName.trim()) {
       Alert.alert('Erro', 'Por favor, digite um nome para a categoria');
       return;
     }
 
-    setLoading(true);
+    setLoading(true); // ativa loading
+
     try {
+      // Insere no Supabase
       const { error } = await supabase
         .from('categories')
         .insert({
@@ -54,36 +80,46 @@ export default function CategoriesScreen({ navigation }) {
 
       if (error) throw error;
 
+      // Limpa o input
       setNewCategoryName('');
+
+      // Recarrega categorias
       loadCategories();
+
       Alert.alert('Sucesso', 'Categoria adicionada com sucesso!');
       
     } catch (error) {
       Alert.alert('Erro', 'Não foi possível adicionar a categoria');
       console.error(error);
     }
-    setLoading(false);
+
+    setLoading(false); // desativa loading
   };
 
+  // Função para excluir categoria
   const handleDeleteCategory = async (categoryId) => {
+
+    // Mostra alerta de confirmação
     Alert.alert(
       'Confirmar Exclusão',
       'Tem certeza que deseja excluir esta categoria?',
       [
         { text: 'Cancelar', style: 'cancel' },
+
         {
           text: 'Excluir',
           style: 'destructive',
           onPress: async () => {
+
             const { error } = await supabase
               .from('categories')
               .delete()
-              .eq('id', categoryId);
+              .eq('id', categoryId); // exclui pelo ID
 
             if (error) {
               Alert.alert('Erro', 'Não foi possível excluir a categoria');
             } else {
-              loadCategories();
+              loadCategories(); // atualiza lista
             }
           },
         },
@@ -91,20 +127,31 @@ export default function CategoriesScreen({ navigation }) {
     );
   };
 
+  // Como cada categoria será exibida no FlatList
   const renderCategory = ({ item }) => (
-    <View style={[
-      styles.categoryCard,
-      { borderLeftColor: item.type === 'income' ? '#34C759' : '#FF3B30' }
-    ]}>
+    <View
+      style={[
+        styles.categoryCard,
+        { borderLeftColor: item.type === 'income' ? '#34C759' : '#FF3B30' }
+      ]}
+    >
       <View style={styles.categoryInfo}>
+        
+        {/* Nome */}
         <Text style={styles.categoryName}>{item.name}</Text>
-        <Text style={[
-          styles.categoryType,
-          { color: item.type === 'income' ? '#34C759' : '#FF3B30' }
-        ]}>
+
+        {/* Tipo */}
+        <Text
+          style={[
+            styles.categoryType,
+            { color: item.type === 'income' ? '#34C759' : '#FF3B30' }
+          ]}
+        >
           {item.type === 'income' ? 'Receita' : 'Despesa'}
         </Text>
       </View>
+
+      {/* Botão excluir */}
       <TouchableOpacity
         style={styles.deleteButton}
         onPress={() => handleDeleteCategory(item.id)}
@@ -116,13 +163,18 @@ export default function CategoriesScreen({ navigation }) {
 
   return (
     <View style={styles.container}>
+
+      {/* Cabeçalho */}
       <View style={styles.header}>
         <Text style={styles.title}>Categorias</Text>
       </View>
 
+      {/* Conteúdo rolável */}
       <ScrollView style={styles.form}>
+
         <Text style={styles.sectionTitle}>Adicionar Nova Categoria</Text>
-        
+
+        {/* Input do nome */}
         <TextInput
           style={styles.input}
           placeholder="Nome da categoria"
@@ -130,7 +182,10 @@ export default function CategoriesScreen({ navigation }) {
           onChangeText={setNewCategoryName}
         />
 
+        {/* Botões Despesa/Receita */}
         <View style={styles.typeSelector}>
+
+          {/* Botão despesa */}
           <TouchableOpacity
             style={[
               styles.typeButton,
@@ -138,14 +193,17 @@ export default function CategoriesScreen({ navigation }) {
             ]}
             onPress={() => setNewCategoryType('expense')}
           >
-            <Text style={[
-              styles.typeButtonText,
-              newCategoryType === 'expense' && styles.typeButtonTextSelected,
-            ]}>
+            <Text
+              style={[
+                styles.typeButtonText,
+                newCategoryType === 'expense' && styles.typeButtonTextSelected,
+              ]}
+            >
               Despesa
             </Text>
           </TouchableOpacity>
 
+          {/* Botão receita */}
           <TouchableOpacity
             style={[
               styles.typeButton,
@@ -153,15 +211,18 @@ export default function CategoriesScreen({ navigation }) {
             ]}
             onPress={() => setNewCategoryType('income')}
           >
-            <Text style={[
-              styles.typeButtonText,
-              newCategoryType === 'income' && styles.typeButtonTextSelected,
-            ]}>
+            <Text
+              style={[
+                styles.typeButtonText,
+                newCategoryType === 'income' && styles.typeButtonTextSelected,
+              ]}
+            >
               Receita
             </Text>
           </TouchableOpacity>
         </View>
 
+        {/* Botão adicionar */}
         <TouchableOpacity
           style={[styles.addButton, loading && styles.addButtonDisabled]}
           onPress={handleAddCategory}
@@ -173,11 +234,10 @@ export default function CategoriesScreen({ navigation }) {
         </TouchableOpacity>
 
         <Text style={styles.sectionTitle}>Minhas Categorias</Text>
-        
+
+        {/* Se não tem categorias */}
         {categories.length === 0 ? (
-          <Text style={styles.noCategoriesText}>
-            Nenhuma categoria cadastrada
-          </Text>
+          <Text style={styles.noCategoriesText}>Nenhuma categoria cadastrada</Text>
         ) : (
           <FlatList
             data={categories}
@@ -191,31 +251,41 @@ export default function CategoriesScreen({ navigation }) {
   );
 }
 
+///////////////////////////////////////////////////////////////////////////
+//////////////////////////////   STYLES   /////////////////////////////////
+///////////////////////////////////////////////////////////////////////////
+
 const styles = StyleSheet.create({
+
   container: {
     flex: 1,
     backgroundColor: '#f5f5f5',
   },
+
   header: {
     backgroundColor: 'white',
     padding: 20,
     paddingTop: 60,
   },
+
   title: {
     fontSize: 24,
     fontWeight: 'bold',
     color: '#333',
   },
+
   form: {
     flex: 1,
     padding: 20,
   },
+
   sectionTitle: {
     fontSize: 18,
     fontWeight: 'bold',
     marginBottom: 15,
     color: '#333',
   },
+
   input: {
     backgroundColor: 'white',
     padding: 15,
@@ -225,6 +295,7 @@ const styles = StyleSheet.create({
     borderColor: '#ddd',
     fontSize: 16,
   },
+
   typeSelector: {
     flexDirection: 'row',
     marginBottom: 20,
@@ -232,23 +303,28 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     padding: 5,
   },
+
   typeButton: {
     flex: 1,
     padding: 12,
     borderRadius: 8,
     alignItems: 'center',
   },
+
   typeButtonSelected: {
     backgroundColor: '#007AFF',
   },
+
   typeButtonText: {
     fontSize: 14,
     fontWeight: 'bold',
     color: '#666',
   },
+
   typeButtonTextSelected: {
     color: 'white',
   },
+
   addButton: {
     backgroundColor: '#007AFF',
     padding: 15,
@@ -256,14 +332,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 30,
   },
+
   addButtonDisabled: {
     backgroundColor: '#ccc',
   },
+
   addButtonText: {
     color: 'white',
     fontSize: 16,
     fontWeight: 'bold',
   },
+
   categoryCard: {
     backgroundColor: 'white',
     padding: 15,
@@ -274,29 +353,35 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderLeftWidth: 4,
   },
+
   categoryInfo: {
     flex: 1,
   },
+
   categoryName: {
     fontSize: 16,
     fontWeight: 'bold',
     color: '#333',
     marginBottom: 4,
   },
+
   categoryType: {
     fontSize: 14,
   },
+
   deleteButton: {
     backgroundColor: '#FF3B30',
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 6,
   },
+
   deleteButtonText: {
     color: 'white',
     fontSize: 12,
     fontWeight: 'bold',
   },
+
   noCategoriesText: {
     textAlign: 'center',
     color: '#666',
