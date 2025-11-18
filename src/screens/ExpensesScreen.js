@@ -93,10 +93,6 @@ export default function ExpensesScreen({ navigation }) {
       // ==================== ETAPA 2: CONVERSÃO PARA BLOB ====================
       console.log('🔄 ETAPA 2: Convertendo imagem para formato binário...');
       
-      //  CONVERSÃO CRÍTICA: 
-      // A imagem no dispositivo está como URI local (file://...)
-      // O Supabase Storage só aceita arquivos em formato BLOB (Binary Large Object)
-      // O fetch() faz uma requisição HTTP para a própria URI local do arquivo
       const response = await fetch(imageUri);
       console.log('✅ Conversão fetch concluída');
       
@@ -111,9 +107,9 @@ export default function ExpensesScreen({ navigation }) {
       //  FAZ UPLOAD PARA O BUCKET 'receipts' NO SUPABASE:
       const { data, error } = await supabase.storage
         .from('receipts') // Nome do bucket onde os comprovantes serão armazenados
-        .upload(uniqueFilename, blob, { // Arquivo único + dados binários
+        .upload(uniqueFilename, blob, { 
           contentType: 'image/jpeg', // Tipo do conteúdo (para o Supabase saber como armazenar)
-          upsert: false // Não sobrescreve se arquivo já existir (segurança)
+          upsert: false
         });
 
       // VERIFICAÇÃO DE ERRO NO UPLOAD:
@@ -135,8 +131,8 @@ export default function ExpensesScreen({ navigation }) {
       
       // GERA URL PÚBLICA para acessar a imagem:
       const publicUrl = supabase.storage
-        .from('receipts')        // Mesmo bucket onde foi feito o upload
-        .getPublicUrl(uniqueFilename); // Gera URL pública para acesso
+        .from('receipts')        
+        .getPublicUrl(uniqueFilename);
 
       console.log('🎯 URL pública gerada com sucesso:', publicUrl.data.publicUrl);
       
@@ -172,7 +168,7 @@ export default function ExpensesScreen({ navigation }) {
     // SE O USUÁRIO SELECIONOU UMA IMAGEM (não cancelou)
     if (!result.canceled) {
       console.log('🖼️ Imagem selecionada da galeria:', result.assets[0].uri);
-      // 💾 SALVA A URI LOCAL no estado (ainda não fez upload)
+      //  SALVA A URI LOCAL no estado (ainda não fez upload)
       setReceipt(result.assets[0].uri);
     }
   };
@@ -219,7 +215,7 @@ export default function ExpensesScreen({ navigation }) {
     setLoading(true);
     
     try {
-      // VARIÁVEL CRÍTICA: armazenará a URL do comprovante no Supabase
+      // VARIÁVEL CRÍTICA: armazenará a URL do comprovante no SUPABASE
       let receiptUrl = null;
       
       // PARTE QUE ENVIA O COMPROVANTE PARA O SUPABASE
@@ -227,7 +223,6 @@ export default function ExpensesScreen({ navigation }) {
         console.log(' ');
         
         // CHAMA A FUNÇÃO DE UPLOAD E AGUARDA O RESULTADO
-        // O "await" é CRÍTICO aqui - faz o código ESPERAR o upload terminar
         receiptUrl = await uploadImageToSupabase(receipt);
         
         // VERIFICA SE O UPLOAD FOI BEM SUCEDIDO
@@ -257,7 +252,6 @@ export default function ExpensesScreen({ navigation }) {
           category: category.replace(/^[^\w]+\s/, ''), //  Remove emoji do nome
           date: date.toISOString().split('T')[0], //  Data no formato YYYY-MM-DD
           receipt_url: receiptUrl, // URL DO COMPROVANTE NO SUPABASE STORAGE 
-          //  Se não há comprovante, receiptUrl será null
         });
 
       //  VERIFICA ERRO NA INSERÇÃO NO BANCO
