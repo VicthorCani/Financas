@@ -65,12 +65,11 @@ export default function ExpensesScreen({ navigation }) {
     }
   };
 
-  // ============================================================
-  // 🔥🔥🔥 FUNÇÃO DE UPLOAD DO COMPROVANTE - SUPER DETALHADA 🔥🔥🔥
-  // ============================================================
+  //  FUNÇÃO DE UPLOAD DO COMPROVANTE 
+
   const uploadImageToSupabase = async (imageUri) => {
     try {
-      // ❌ VERIFICAÇÃO INICIAL: Se não há imagem, retorna null
+      //  VERIFICAÇÃO INICIAL: Se não há imagem, retorna null
       if (!imageUri) {
         console.log('❌ Nenhuma imagem fornecida para upload');
         return null;
@@ -79,7 +78,7 @@ export default function ExpensesScreen({ navigation }) {
       console.log('🔄 Iniciando processo de upload do comprovante...');
       console.log('📁 URI local da imagem:', imageUri);
 
-      // ==================== ETAPA 1: PREPARAÇÃO DO ARQUIVO ====================
+      //  PREPARAÇÃO DO ARQUIVO
       console.log('📝 ETAPA 1: Preparando arquivo...');
       
       // Extrai o nome do arquivo da URI (ex: 'image.jpg' de 'file:///.../image.jpg')
@@ -87,14 +86,14 @@ export default function ExpensesScreen({ navigation }) {
       console.log('📄 Nome original do arquivo:', filename);
       
       // Cria um nome único usando timestamp + nome original
-      // ⚡ ISSO EVITA CONFLITOS: se dois usuários fizerem upload ao mesmo tempo
+      //  ISSO EVITA CONFLITOS: se dois usuários fizerem upload ao mesmo tempo
       const uniqueFilename = `${Date.now()}_${filename}`;
       console.log('🆕 Nome único gerado:', uniqueFilename);
 
       // ==================== ETAPA 2: CONVERSÃO PARA BLOB ====================
       console.log('🔄 ETAPA 2: Convertendo imagem para formato binário...');
       
-      // 📦 CONVERSÃO CRÍTICA: 
+      //  CONVERSÃO CRÍTICA: 
       // A imagem no dispositivo está como URI local (file://...)
       // O Supabase Storage só aceita arquivos em formato BLOB (Binary Large Object)
       // O fetch() faz uma requisição HTTP para a própria URI local do arquivo
@@ -106,10 +105,10 @@ export default function ExpensesScreen({ navigation }) {
       console.log('📦 Arquivo convertido para Blob, tamanho:', blob.size, 'bytes');
       console.log('📊 Tipo do Blob:', blob.type);
 
-      // ==================== ETAPA 3: UPLOAD PARA SUPABASE STORAGE ====================
+      //  UPLOAD PARA SUPABASE STORAGE
       console.log('🚀 ETAPA 3: Iniciando upload para Supabase Storage...');
       
-      // 📤 FAZ UPLOAD PARA O BUCKET 'receipts' NO SUPABASE:
+      //  FAZ UPLOAD PARA O BUCKET 'receipts' NO SUPABASE:
       const { data, error } = await supabase.storage
         .from('receipts') // Nome do bucket onde os comprovantes serão armazenados
         .upload(uniqueFilename, blob, { // Arquivo único + dados binários
@@ -136,7 +135,7 @@ export default function ExpensesScreen({ navigation }) {
       
       // GERA URL PÚBLICA para acessar a imagem:
       const publicUrl = supabase.storage
-        .from('receipts')        //📦 Mesmo bucket onde foi feito o upload
+        .from('receipts')        // Mesmo bucket onde foi feito o upload
         .getPublicUrl(uniqueFilename); // Gera URL pública para acesso
 
       console.log('🎯 URL pública gerada com sucesso:', publicUrl.data.publicUrl);
@@ -155,14 +154,14 @@ export default function ExpensesScreen({ navigation }) {
 
   // FUNÇÕES PARA CAPTURAR IMAGEM (GALERIA E CÂMERA)
   const pickImage = async () => {
-    // 🔐 SOLICITA PERMISSÃO para acessar a galeria
+    //  SOLICITA PERMISSÃO para acessar a galeria
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
       Alert.alert('Permissão necessária', 'Precisamos de acesso à galeria para anexar comprovantes.');
       return;
     }
 
-    // 🖼️ ABRE A GALERIA de imagens do dispositivo
+    //  ABRE A GALERIA de imagens do dispositivo
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images, // Apenas imagens (não vídeos)
       allowsEditing: true,      // Permite editar/cortar a imagem
@@ -188,9 +187,9 @@ export default function ExpensesScreen({ navigation }) {
 
     // ABRE A CÂMERA do dispositivo
     const result = await ImagePicker.launchCameraAsync({
-      allowsEditing: true,      // ✂️ Permite editar/cortar a foto
-      aspect: [4, 3],           // 📐 Proporção da foto (4:3)
-      quality: 0.8,             // 💎 Qualidade (0.0 a 1.0) - 80%
+      allowsEditing: true,      //  Permite editar/cortar a foto
+      aspect: [4, 3],           //  Proporção da foto (4:3)
+      quality: 0.8,             //  Qualidade (0.0 a 1.0) - 80%
     });
 
     // SE O USUÁRIO TIROU FOTO (não cancelou)
@@ -202,7 +201,6 @@ export default function ExpensesScreen({ navigation }) {
   };
   
   // FUNÇÃO PRINCIPAL - ENVIO DO FORMULÁRIO COMPLETO
-  // ============================================================
   const handleSubmit = async () => {
     // VALIDAÇÕES BÁSICAS dos campos obrigatórios
     if (!amount || !description || !category) {
